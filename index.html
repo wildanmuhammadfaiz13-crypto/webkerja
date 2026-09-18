@@ -102,52 +102,65 @@
   }
   .io-btn:hover{ border-color: var(--brass); color: var(--parchment); }
 
-  /* ---------- Board ---------- */
+  /* ---------- List ---------- */
   .board{
     position:relative; z-index:1;
-    display:grid; grid-template-columns: repeat(4, minmax(260px,1fr));
-    gap: 18px; padding: 22px clamp(20px,5vw,64px) 64px;
-    align-items:start;
+    padding: 22px clamp(20px,5vw,64px) 64px;
   }
-  @media (max-width: 980px){
-    .board{ grid-template-columns: 1fr; }
+  .list-panel{ background: var(--parchment); border-radius: 4px; overflow:hidden; }
+  .list-head{
+    display:grid; grid-template-columns: 2.4fr 1fr 110px 130px 28px;
+    gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--parchment-dim);
+    font-size:12px; color:#8a7f60;
+  }
+  @media (max-width: 720px){
+    .list-head{ display:none; }
   }
 
-  .column{ background: var(--parchment); border-radius: 4px; overflow:hidden; }
-  .column-head{
-    display:flex; justify-content:space-between; align-items:center;
-    padding: 14px 16px 12px; border-bottom: 1px solid var(--parchment-dim);
+  .empty-col{ padding: 46px 20px; text-align:center; color:#9a9078; font-size:14px; }
+
+  .row{
+    display:grid; grid-template-columns: 2.4fr 1fr 110px 130px 28px;
+    gap: 12px; align-items:center;
+    padding: 14px 18px; cursor:pointer;
+    border-left: 3px solid var(--slate);
+    border-bottom: 1px solid var(--parchment-dim);
+    transition: background .12s ease;
   }
-  .column-head .title{ display:flex; align-items:center; gap:9px; }
-  .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-  .dot.dikirim{ background: var(--slate); }
-  .dot.wawancara{ background: var(--brass-dim); }
-  .dot.tawaran{ background: var(--sage); }
-  .dot.ditolak{ background: var(--rust); }
-  .column-head h3{ margin:0; font-size:16px; color: var(--ink); font-weight:600; }
-  .column-head .count{ font-family:'Work Sans',sans-serif; font-size:12.5px; color:#7a725c; background: var(--parchment-dim); padding:2px 9px; border-radius:20px; }
+  .row:last-child{ border-bottom:none; }
+  .row:hover{ background: #ffffffb0; }
+  .row.dikirim{ border-left-color: var(--slate); }
+  .row.wawancara{ border-left-color: var(--brass-dim); }
+  .row.tawaran{ border-left-color: var(--sage); }
+  .row.ditolak{ border-left-color: var(--rust); }
 
-  .cards{ padding: 10px; min-height: 60px; display:flex; flex-direction:column; gap:10px; }
+  .row .who .company{ font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; color: var(--ink); margin:0; }
+  .row .who .role{ font-size:12.5px; color:#5b5442; margin:2px 0 0; }
 
-  .empty-col{ padding: 22px 10px; text-align:center; color:#9a9078; font-size:13px; }
+  .row .date{ font-size:13px; color:#7a725c; }
 
-  .card{
-    background: #fff; border-left: 3px solid var(--slate);
-    padding: 12px 14px; cursor:pointer; position:relative;
-    box-shadow: 0 1px 2px rgba(28,34,48,0.08);
-    transition: box-shadow .12s ease;
+  .badge{
+    display:inline-block; font-size:12px; font-weight:500; padding:5px 12px;
+    border-radius:20px; text-align:center; width:fit-content;
   }
-  .card:hover{ box-shadow: 0 3px 10px rgba(28,34,48,0.14); }
-  .card.dikirim{ border-left-color: var(--slate); }
-  .card.wawancara{ border-left-color: var(--brass-dim); }
-  .card.tawaran{ border-left-color: var(--sage); }
-  .card.ditolak{ border-left-color: var(--rust); }
+  .badge.dikirim{ background:#e4e8ee; color:#4a5877; }
+  .badge.wawancara{ background:#f1e6cf; color:#7d5e26; }
+  .badge.tawaran{ background:#e1ebe3; color:#3c5f47; }
+  .badge.ditolak{ background:#f1dfdb; color:#833a2a; }
 
-  .card .company{ font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; color: var(--ink); margin:0 0 2px; }
-  .card .role{ font-size:13px; color:#5b5442; margin:0 0 8px; }
-  .card .meta{ display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#95896a; }
-  .card .meta a{ color: var(--brass-dim); text-decoration:none; }
-  .card .meta a:hover{ text-decoration:underline; }
+  .row .link-cell a{ color: var(--brass-dim); text-decoration:none; font-size:13px; }
+  .row .link-cell a:hover{ text-decoration:underline; }
+
+  .row .chev{ color:#c3b998; text-align:right; font-size:15px; }
+
+  @media (max-width: 720px){
+    .row{ grid-template-columns: 1fr auto; grid-template-areas: "who badge" "date link"; row-gap:6px; }
+    .row .who{ grid-area: who; }
+    .badge{ grid-area: badge; justify-self:end; }
+    .row .date{ grid-area: date; }
+    .row .link-cell{ grid-area: link; justify-self:end; }
+    .row .chev{ display:none; }
+  }
 
   /* ---------- Modal ---------- */
   .overlay{
@@ -351,39 +364,43 @@ function renderStats(){
 function render(){
   renderStats();
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  const filtered = data.filter(d =>
-    !q || d.company.toLowerCase().includes(q) || d.role.toLowerCase().includes(q)
-  );
+  const filtered = data
+    .filter(d => !q || d.company.toLowerCase().includes(q) || d.role.toLowerCase().includes(q))
+    .slice()
+    .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
 
   const board = document.getElementById('board');
-  board.innerHTML = STATUS_ORDER.map(status => {
-    const items = filtered
-      .filter(d => d.status === status)
-      .sort((a,b) => (b.date||'').localeCompare(a.date||''));
 
-    const cardsHtml = items.length
-      ? items.map(d => `
-        <div class="card ${status}" onclick="openModal('${d.id}')">
-          <p class="company">${escapeHtml(d.company)}</p>
-          <p class="role">${escapeHtml(d.role)}</p>
-          <div class="meta">
-            <span>${fmtDate(d.date)}</span>
-            ${d.link ? `<a href="${escapeAttr(d.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Lihat lowongan ↗</a>` : ''}
-          </div>
-        </div>
-      `).join('')
-      : `<div class="empty-col">Belum ada lamaran di sini.</div>`;
+  if(!filtered.length){
+    board.innerHTML = `<div class="list-panel"><div class="empty-col">${data.length ? 'Tidak ada yang cocok dengan pencarianmu.' : 'Belum ada lamaran tercatat. Klik "Catat lamaran baru" untuk mulai.'}</div></div>`;
+    return;
+  }
 
-    return `
-      <div class="column">
-        <div class="column-head">
-          <div class="title"><span class="dot ${status}"></span><h3>${STATUS_LABELS[status]}</h3></div>
-          <span class="count">${items.length}</span>
-        </div>
-        <div class="cards">${cardsHtml}</div>
+  const rowsHtml = filtered.map(d => `
+    <div class="row ${d.status}" onclick="openModal('${d.id}')">
+      <div class="who">
+        <p class="company">${escapeHtml(d.company)}</p>
+        <p class="role">${escapeHtml(d.role)}</p>
       </div>
-    `;
-  }).join('');
+      <div><span class="badge ${d.status}">${STATUS_LABELS[d.status]}</span></div>
+      <div class="date">${fmtDate(d.date)}</div>
+      <div class="link-cell">${d.link ? `<a href="${escapeAttr(d.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Lihat lowongan ↗</a>` : ''}</div>
+      <div class="chev">›</div>
+    </div>
+  `).join('');
+
+  board.innerHTML = `
+    <div class="list-panel">
+      <div class="list-head">
+        <div>Lamaran</div>
+        <div>Status</div>
+        <div>Tanggal</div>
+        <div>Tautan</div>
+        <div></div>
+      </div>
+      ${rowsHtml}
+    </div>
+  `;
 }
 
 function escapeHtml(str){
@@ -429,6 +446,7 @@ document.addEventListener('keydown', (e) => {
 function saveEntry(e){
   e.preventDefault();
   const id = document.getElementById('entryId').value;
+  const existing = id ? data.find(d => d.id === id) : null;
   const entry = {
     id: id || uid(),
     company: document.getElementById('fCompany').value.trim(),
@@ -437,6 +455,7 @@ function saveEntry(e){
     status: document.getElementById('fStatus').value,
     link: document.getElementById('fLink').value.trim(),
     notes: document.getElementById('fNotes').value.trim(),
+    createdAt: existing ? existing.createdAt : Date.now(),
   };
   if(id){
     const idx = data.findIndex(d => d.id === id);
