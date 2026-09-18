@@ -130,6 +130,7 @@
   .row:last-child{ border-bottom:none; }
   .row:hover{ background: #ffffffb0; }
   .row.dikirim{ border-left-color: var(--slate); }
+  .row.psikotest{ border-left-color: #8b6fae; }
   .row.wawancara{ border-left-color: var(--brass-dim); }
   .row.tawaran{ border-left-color: var(--sage); }
   .row.ditolak{ border-left-color: var(--rust); }
@@ -144,6 +145,7 @@
     border-radius:20px; text-align:center; width:fit-content;
   }
   .badge.dikirim{ background:#e4e8ee; color:#4a5877; }
+  .badge.psikotest{ background:#e9e2f1; color:#5c3f7d; }
   .badge.wawancara{ background:#f1e6cf; color:#7d5e26; }
   .badge.tawaran{ background:#e1ebe3; color:#3c5f47; }
   .badge.ditolak{ background:#f1dfdb; color:#833a2a; }
@@ -288,6 +290,7 @@
           <label for="fStatus">Status</label>
           <select id="fStatus">
             <option value="dikirim">Dikirim</option>
+            <option value="psikotest">Psikotest</option>
             <option value="wawancara">Wawancara</option>
             <option value="tawaran">Tawaran</option>
             <option value="ditolak">Ditolak</option>
@@ -317,8 +320,8 @@
 
 <script>
 const STORAGE_KEY = 'kompasKarierData';
-const STATUS_LABELS = { dikirim: 'Dikirim', wawancara: 'Wawancara', tawaran: 'Tawaran', ditolak: 'Ditolak' };
-const STATUS_ORDER = ['dikirim','wawancara','tawaran','ditolak'];
+const STATUS_LABELS = { dikirim: 'Dikirim', psikotest: 'Psikotest', wawancara: 'Wawancara', tawaran: 'Tawaran', ditolak: 'Ditolak' };
+const STATUS_ORDER = ['dikirim','psikotest','wawancara','tawaran','ditolak'];
 
 let data = loadData();
 
@@ -345,9 +348,9 @@ function fmtDate(iso){
 
 function renderStats(){
   const total = data.length;
-  const counts = { dikirim:0, wawancara:0, tawaran:0, ditolak:0 };
+  const counts = { dikirim:0, psikotest:0, wawancara:0, tawaran:0, ditolak:0 };
   data.forEach(d => counts[d.status] = (counts[d.status]||0) + 1);
-  const responded = counts.wawancara + counts.tawaran;
+  const responded = counts.psikotest + counts.wawancara + counts.tawaran;
   const rate = total ? Math.round((responded/total)*100) : 0;
 
   const stats = [
