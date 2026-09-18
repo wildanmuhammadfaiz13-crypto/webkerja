@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kompas Karier — Pelacak Lamaran Kerja</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep: #101c33;
+    --navy-panel: #17263f;
+    --navy-panel-2: #1c2e4c;
+    --parchment: #f4efe2;
+    --parchment-dim: #e9e2cf;
+    --ink: #1c2230;
+    --brass: #c79a52;
+    --brass-dim: #8a723f;
+    --sage: #5c8266;
+    --rust: #a1533f;
+    --slate: #7c8aa3;
+    --text-on-dark: #ece7d8;
+    --text-on-dark-dim: #a7aec2;
+    --radius-btn: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--navy-deep);
+    color: var(--text-on-dark);
+    font-family: 'Work Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.serif{ font-family:'Fraunces', serif; }
+
+  /* ---------- Background compass texture ---------- */
+  .bg-compass{
+    position:fixed; top:-120px; right:-120px; width:480px; height:480px;
+    opacity:0.05; pointer-events:none; z-index:0;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    position:relative; z-index:1;
+    border-bottom:1px solid rgba(199,154,82,0.35);
+    padding: 36px clamp(20px,5vw,64px) 28px;
+    display:flex; justify-content:space-between; align-items:flex-end; gap:24px; flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand svg{ width:38px; height:38px; flex-shrink:0; }
+  .brand h1{ font-size: clamp(26px,3.4vw,34px); font-weight:600; margin:0; letter-spacing:0.2px; color:var(--parchment); }
+  .brand p{ margin:4px 0 0; color:var(--text-on-dark-dim); font-size:14px; }
+
+  .add-btn{
+    background: var(--brass); color: var(--navy-deep); border:none;
+    font-family:'Work Sans',sans-serif; font-weight:600; font-size:14.5px;
+    padding: 12px 22px; border-radius: var(--radius-btn); cursor:pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .add-btn:hover{ background:#d8ac66; }
+  .add-btn:active{ transform: translateY(1px); }
+
+  /* ---------- Stats instrument panel ---------- */
+  .stats{
+    position:relative; z-index:1;
+    display:flex; flex-wrap:wrap;
+    padding: 22px clamp(20px,5vw,64px);
+    gap: 0;
+    border-bottom:1px solid rgba(199,154,82,0.2);
+  }
+  .stat{
+    flex:1 1 140px; padding: 6px 26px;
+    border-left: 1px solid rgba(199,154,82,0.25);
+  }
+  .stat:first-child{ border-left:none; padding-left:0; }
+  .stat .num{ font-family:'Fraunces',serif; font-size: 32px; font-weight:600; color: var(--parchment); line-height:1; }
+  .stat .lbl{ margin-top:6px; font-size:13px; color: var(--text-on-dark-dim); }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    position:relative; z-index:1;
+    display:flex; gap:14px; align-items:center; flex-wrap:wrap;
+    padding: 20px clamp(20px,5vw,64px) 0;
+  }
+  .search-wrap{ position:relative; flex:1 1 240px; max-width:360px; }
+  .search-wrap input{
+    width:100%; background: var(--navy-panel); border:1px solid rgba(199,154,82,0.3);
+    color: var(--text-on-dark); padding: 10px 14px 10px 36px; border-radius: var(--radius-btn);
+    font-family:'Work Sans',sans-serif; font-size:14px;
+  }
+  .search-wrap input::placeholder{ color: var(--text-on-dark-dim); }
+  .search-wrap input:focus{ outline:2px solid var(--brass); outline-offset:1px; }
+  .search-wrap .icon{ position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:0.6; }
+
+  .io-btn{
+    background: transparent; border:1px solid rgba(199,154,82,0.35); color: var(--text-on-dark-dim);
+    padding: 9px 14px; border-radius: var(--radius-btn); font-family:'Work Sans',sans-serif; font-size:13.5px;
+    cursor:pointer; transition: border-color .15s ease, color .15s ease;
+  }
+  .io-btn:hover{ border-color: var(--brass); color: var(--parchment); }
+
+  /* ---------- Board ---------- */
+  .board{
+    position:relative; z-index:1;
+    display:grid; grid-template-columns: repeat(4, minmax(260px,1fr));
+    gap: 18px; padding: 22px clamp(20px,5vw,64px) 64px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .board{ grid-template-columns: 1fr; }
+  }
+
+  .column{ background: var(--parchment); border-radius: 4px; overflow:hidden; }
+  .column-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 14px 16px 12px; border-bottom: 1px solid var(--parchment-dim);
+  }
+  .column-head .title{ display:flex; align-items:center; gap:9px; }
+  .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .dot.dikirim{ background: var(--slate); }
+  .dot.wawancara{ background: var(--brass-dim); }
+  .dot.tawaran{ background: var(--sage); }
+  .dot.ditolak{ background: var(--rust); }
+  .column-head h3{ margin:0; font-size:16px; color: var(--ink); font-weight:600; }
+  .column-head .count{ font-family:'Work Sans',sans-serif; font-size:12.5px; color:#7a725c; background: var(--parchment-dim); padding:2px 9px; border-radius:20px; }
+
+  .cards{ padding: 10px; min-height: 60px; display:flex; flex-direction:column; gap:10px; }
+
+  .empty-col{ padding: 22px 10px; text-align:center; color:#9a9078; font-size:13px; }
+
+  .card{
+    background: #fff; border-left: 3px solid var(--slate);
+    padding: 12px 14px; cursor:pointer; position:relative;
+    box-shadow: 0 1px 2px rgba(28,34,48,0.08);
+    transition: box-shadow .12s ease;
+  }
+  .card:hover{ box-shadow: 0 3px 10px rgba(28,34,48,0.14); }
+  .card.dikirim{ border-left-color: var(--slate); }
+  .card.wawancara{ border-left-color: var(--brass-dim); }
+  .card.tawaran{ border-left-color: var(--sage); }
+  .card.ditolak{ border-left-color: var(--rust); }
+
+  .card .company{ font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; color: var(--ink); margin:0 0 2px; }
+  .card .role{ font-size:13px; color:#5b5442; margin:0 0 8px; }
+  .card .meta{ display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#95896a; }
+  .card .meta a{ color: var(--brass-dim); text-decoration:none; }
+  .card .meta a:hover{ text-decoration:underline; }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background: rgba(16,28,51,0.72);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  .overlay.show{ display:flex; }
+  .modal{
+    background: var(--parchment); width:100%; max-width: 480px; border-radius:4px;
+    padding: 28px 28px 24px; max-height: 90vh; overflow-y:auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .modal h2{ margin:0 0 4px; font-size:21px; color: var(--ink); font-weight:600; }
+  .modal .sub{ margin:0 0 20px; font-size:13px; color:#7a725c; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; color:#7a725c; margin-bottom:5px; }
+  .field input, .field select, .field textarea{
+    width:100%; border:1px solid #d8cfb4; background:#fff; color: var(--ink);
+    padding: 9px 11px; border-radius:3px; font-family:'Work Sans',sans-serif; font-size:14px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:2px solid var(--brass-dim); outline-offset:0; }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .modal-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:20px; gap:10px; }
+  .btn-primary{
+    background: var(--navy-deep); color: var(--parchment); border:none; padding: 11px 20px;
+    border-radius:3px; font-family:'Work Sans',sans-serif; font-weight:600; font-size:14px; cursor:pointer;
+  }
+  .btn-primary:hover{ background:#1c2e4c; }
+  .btn-text{
+    background:none; border:none; color:#8a7f60; font-size:13.5px; cursor:pointer; padding:8px;
+  }
+  .btn-text:hover{ color: var(--rust); }
+  .btn-ghost{
+    background:none; border:1px solid #d8cfb4; color:#5b5442; padding:10px 18px;
+    border-radius:3px; font-size:14px; cursor:pointer;
+  }
+
+  footer{
+    position:relative; z-index:1; text-align:center; padding: 0 20px 40px;
+    color: var(--text-on-dark-dim); font-size:12.5px; line-height:1.7;
+  }
+  footer a{ color: var(--brass); text-decoration:none; }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px);
+    background: var(--navy-panel-2); border:1px solid var(--brass); color: var(--parchment);
+    padding: 11px 20px; border-radius:3px; font-size:13.5px; z-index:60;
+    opacity:0; pointer-events:none; transition: opacity .2s ease, transform .2s ease;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  input[type=file]{ display:none; }
+</style>
+</head>
+<body>
+
+<svg class="bg-compass" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="98" stroke="#c79a52" stroke-width="1"/>
+  <circle cx="100" cy="100" r="70" stroke="#c79a52" stroke-width="1"/>
+  <path d="M100 6 L106 96 L100 100 L94 96 Z" fill="#c79a52"/>
+  <path d="M100 194 L94 104 L100 100 L106 104 Z" fill="#c79a52"/>
+  <line x1="6" y1="100" x2="194" y2="100" stroke="#c79a52" stroke-width="1"/>
+</svg>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="18" stroke="#c79a52" stroke-width="1.4"/>
+      <path d="M20 8 L23 19 L20 20 L17 19 Z" fill="#c79a52"/>
+      <path d="M20 32 L17 21 L20 20 L23 21 Z" fill="#e9e2cf"/>
+      <circle cx="20" cy="20" r="2" fill="#c79a52"/>
+    </svg>
+    <div>
+      <h1>Kompas Karier</h1>
+      <p>Peta perjalanan lamaran kerjamu, dari kirim sampai tawaran.</p>
+    </div>
+  </div>
+  <button class="add-btn" onclick="openModal()">+ Catat lamaran baru</button>
+</header>
+
+<section class="stats" id="stats"></section>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a7aec2" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="searchInput" placeholder="Cari perusahaan atau posisi..." oninput="render()">
+  </div>
+  <button class="io-btn" onclick="exportData()">Ekspor data (.json)</button>
+  <button class="io-btn" onclick="document.getElementById('importFile').click()">Impor data</button>
+  <input type="file" id="importFile" accept="application/json" onchange="importData(event)">
+</div>
+
+<main class="board" id="board"></main>
+
+<footer>
+  Data disimpan langsung di browser ini (localStorage) — tidak dikirim ke server mana pun.<br>
+  Ganti perangkat atau browser? Pakai <strong>Ekspor</strong> untuk menyimpan cadangan, lalu <strong>Impor</strong> di perangkat baru.
+</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Catat lamaran baru</h2>
+    <p class="sub">Isi apa yang kamu tahu — semua kolom boleh dilengkapi belakangan.</p>
+    <form id="jobForm" onsubmit="saveEntry(event)">
+      <input type="hidden" id="entryId">
+      <div class="row2">
+        <div class="field">
+          <label for="fCompany">Perusahaan</label>
+          <input type="text" id="fCompany" required placeholder="mis. Tokopedia">
+        </div>
+        <div class="field">
+          <label for="fRole">Posisi</label>
+          <input type="text" id="fRole" required placeholder="mis. Frontend Engineer">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="fDate">Tanggal melamar</label>
+          <input type="date" id="fDate" required>
+        </div>
+        <div class="field">
+          <label for="fStatus">Status</label>
+          <select id="fStatus">
+            <option value="dikirim">Dikirim</option>
+            <option value="wawancara">Wawancara</option>
+            <option value="tawaran">Tawaran</option>
+            <option value="ditolak">Ditolak</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fLink">Tautan lowongan (opsional)</label>
+        <input type="url" id="fLink" placeholder="https://...">
+      </div>
+      <div class="field">
+        <label for="fNotes">Catatan (opsional)</label>
+        <textarea id="fNotes" placeholder="Nama HR, tahap wawancara, gaji yang dibahas, dll."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-text" id="deleteBtn" onclick="deleteEntry()" style="display:none;">Hapus catatan</button>
+        <div style="display:flex; gap:10px; margin-left:auto;">
+          <button type="button" class="btn-ghost" onclick="closeModal()">Batal</button>
+          <button type="submit" class="btn-primary">Simpan</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'kompasKarierData';
+const STATUS_LABELS = { dikirim: 'Dikirim', wawancara: 'Wawancara', tawaran: 'Tawaran', ditolak: 'Ditolak' };
+const STATUS_ORDER = ['dikirim','wawancara','tawaran','ditolak'];
+
+let data = loadData();
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }catch(e){
+    showToast('Gagal menyimpan — penyimpanan browser penuh atau diblokir.');
+  }
+}
+function uid(){ return 'j_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+function fmtDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function renderStats(){
+  const total = data.length;
+  const counts = { dikirim:0, wawancara:0, tawaran:0, ditolak:0 };
+  data.forEach(d => counts[d.status] = (counts[d.status]||0) + 1);
+  const responded = counts.wawancara + counts.tawaran;
+  const rate = total ? Math.round((responded/total)*100) : 0;
+
+  const stats = [
+    { num: total, lbl: 'Total lamaran' },
+    { num: counts.wawancara, lbl: 'Diwawancara' },
+    { num: counts.tawaran, lbl: 'Tawaran diterima' },
+    { num: total ? rate + '%' : '—', lbl: 'Tingkat direspons' },
+  ];
+  document.getElementById('stats').innerHTML = stats.map(s =>
+    `<div class="stat"><div class="num">${s.num}</div><div class="lbl">${s.lbl}</div></div>`
+  ).join('');
+}
+
+function render(){
+  renderStats();
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = data.filter(d =>
+    !q || d.company.toLowerCase().includes(q) || d.role.toLowerCase().includes(q)
+  );
+
+  const board = document.getElementById('board');
+  board.innerHTML = STATUS_ORDER.map(status => {
+    const items = filtered
+      .filter(d => d.status === status)
+      .sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+    const cardsHtml = items.length
+      ? items.map(d => `
+        <div class="card ${status}" onclick="openModal('${d.id}')">
+          <p class="company">${escapeHtml(d.company)}</p>
+          <p class="role">${escapeHtml(d.role)}</p>
+          <div class="meta">
+            <span>${fmtDate(d.date)}</span>
+            ${d.link ? `<a href="${escapeAttr(d.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Lihat lowongan ↗</a>` : ''}
+          </div>
+        </div>
+      `).join('')
+      : `<div class="empty-col">Belum ada lamaran di sini.</div>`;
+
+    return `
+      <div class="column">
+        <div class="column-head">
+          <div class="title"><span class="dot ${status}"></span><h3>${STATUS_LABELS[status]}</h3></div>
+          <span class="count">${items.length}</span>
+        </div>
+        <div class="cards">${cardsHtml}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(str){
+  return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+function openModal(id){
+  const overlay = document.getElementById('overlay');
+  const form = document.getElementById('jobForm');
+  form.reset();
+  if(id){
+    const entry = data.find(d => d.id === id);
+    if(!entry) return;
+    document.getElementById('modalTitle').textContent = 'Ubah catatan';
+    document.getElementById('entryId').value = entry.id;
+    document.getElementById('fCompany').value = entry.company;
+    document.getElementById('fRole').value = entry.role;
+    document.getElementById('fDate').value = entry.date || '';
+    document.getElementById('fStatus').value = entry.status;
+    document.getElementById('fLink').value = entry.link || '';
+    document.getElementById('fNotes').value = entry.notes || '';
+    document.getElementById('deleteBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('modalTitle').textContent = 'Catat lamaran baru';
+    document.getElementById('entryId').value = '';
+    document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('deleteBtn').style.display = 'none';
+  }
+  overlay.classList.add('show');
+  document.getElementById('fCompany').focus();
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('show');
+}
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if(e.target.id === 'overlay') closeModal();
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeModal();
+});
+
+function saveEntry(e){
+  e.preventDefault();
+  const id = document.getElementById('entryId').value;
+  const entry = {
+    id: id || uid(),
+    company: document.getElementById('fCompany').value.trim(),
+    role: document.getElementById('fRole').value.trim(),
+    date: document.getElementById('fDate').value,
+    status: document.getElementById('fStatus').value,
+    link: document.getElementById('fLink').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+  if(id){
+    const idx = data.findIndex(d => d.id === id);
+    if(idx > -1) data[idx] = entry;
+    showToast('Catatan diperbarui.');
+  } else {
+    data.push(entry);
+    showToast('Lamaran baru dicatat.');
+  }
+  persist();
+  render();
+  closeModal();
+}
+
+function deleteEntry(){
+  const id = document.getElementById('entryId').value;
+  if(!id) return;
+  if(!confirm('Hapus catatan lamaran ini?')) return;
+  data = data.filter(d => d.id !== id);
+  persist();
+  render();
+  closeModal();
+  showToast('Catatan dihapus.');
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kompas-karier-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data diekspor.');
+}
+
+function importData(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const imported = JSON.parse(reader.result);
+      if(!Array.isArray(imported)) throw new Error('Format tidak valid');
+      const merge = confirm('Gabungkan dengan data yang ada? Tekan "Batal" untuk menimpa seluruhnya.');
+      data = merge ? [...data, ...imported] : imported;
+      persist();
+      render();
+      showToast('Data berhasil diimpor.');
+    }catch(err){
+      showToast('Gagal membaca file — pastikan ini file ekspor Kompas Karier.');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+let toastTimer;
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+render();
+</script>
+</body>
+</html>
